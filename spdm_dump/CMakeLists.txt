@@ -22,6 +22,10 @@ SET(src_spdm_dump
     pci/pci_tdisp/spdm_dump_pci_tdisp.c
     cxl/cxl_ide_km/spdm_dump_cxl_ide_km.c
     cxl/cxl_tsp/spdm_dump_cxl_tsp.c
+    auth/spdm_dump_vendor_dmtf_dsp.c
+    auth/spdm_dump_auth_record.c
+    auth/spdm_dump_auth_message.c
+    auth/spdm_dump_auth_opaque_data.c
 )
 
 SET(spdm_dump_LIBRARY

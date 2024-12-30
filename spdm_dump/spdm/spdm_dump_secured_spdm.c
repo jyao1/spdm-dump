@@ -76,6 +76,46 @@ dispatch_table_entry_t m_spdm_opaque_dispatch[] = {
       "SUPPORTED_VERSION", dump_spdm_opaque_supported_version },
 };
 
+void dump_spdm_dmtf_opaque_data(const void *buffer, size_t buffer_size)
+{
+    const secured_message_opaque_element_table_header_t
+    *secured_message_element_table;
+    const secured_message_opaque_element_header_t *secured_message_element;
+
+    secured_message_element_table = buffer;
+
+    if (secured_message_element_table->vendor_len != 0) {
+        return ;
+    }
+
+    printf("\n      OpaqueElement(id=0x%02x, len=0x%04x) ",
+           secured_message_element_table->id,
+           secured_message_element_table->opaque_element_data_len);
+    if (secured_message_element_table->opaque_element_data_len <
+        sizeof(secured_message_opaque_element_header_t)) {
+        return ;
+    }
+    secured_message_element =
+        (void *)(secured_message_element_table + 1);
+    printf("Element(Ver=0x%02x, id=0x%02x) ",
+           secured_message_element->sm_data_version,
+           secured_message_element->sm_data_id);
+
+    dump_dispatch_message(
+        m_spdm_opaque_dispatch,
+        LIBSPDM_ARRAY_SIZE(m_spdm_opaque_dispatch),
+        secured_message_element->sm_data_id,
+        (uint8_t *)secured_message_element,
+        secured_message_element_table->opaque_element_data_len);
+}
+
+dispatch_table_entry_t m_spdm_dmtf_opaque_data_dispatch[] = {
+    { SPDM_REGISTRY_ID_DMTF,
+      "DMTF", dump_spdm_dmtf_opaque_data },
+    { SPDM_REGISTRY_ID_DMTF_DSP,
+      "DMTF_DSP", dump_spdm_dmtf_dsp_opaque_data },
+};
+
 void dump_spdm_opaque_data(uint8_t spdm_version, const uint8_t *opaque_data, uint16_t opaque_length)
 {
     secured_message_general_opaque_data_table_header_t
@@ -83,9 +123,8 @@ void dump_spdm_opaque_data(uint8_t spdm_version, const uint8_t *opaque_data, uin
     spdm_general_opaque_data_table_header_t
     *spdm_opaque_data_table_header;
     uint8_t total_elements;
-    secured_message_opaque_element_table_header_t
-    *secured_message_element_table;
-    secured_message_opaque_element_header_t *secured_message_element;
+    opaque_element_table_header_t *opaque_element_table_header;
+    uint16_t opaque_element_data_len;
     size_t end_of_element_table;
     size_t end_of_opaque_data;
     size_t index;
@@ -106,7 +145,7 @@ void dump_spdm_opaque_data(uint8_t spdm_version, const uint8_t *opaque_data, uin
         printf("\n      SpdmOpaqueDataHeader(TotalElem=0x%02x)",
                spdm_opaque_data_table_header->total_elements);
 
-        secured_message_element_table =
+        opaque_element_table_header =
             (void *)(spdm_opaque_data_table_header + 1);
         total_elements = spdm_opaque_data_table_header->total_elements;
     } else {
@@ -128,54 +167,48 @@ void dump_spdm_opaque_data(uint8_t spdm_version, const uint8_t *opaque_data, uin
             ch[0], secured_message_opaque_data_table->opaque_version,
             secured_message_opaque_data_table->total_elements);
 
-        secured_message_element_table =
+        opaque_element_table_header =
             (void *)(secured_message_opaque_data_table + 1);
         total_elements = secured_message_opaque_data_table->total_elements;
     }
+
     for (index = 0;
          index < total_elements;
          index++) {
-        if ((size_t)secured_message_element_table +
-            sizeof(secured_message_opaque_element_table_header_t) >
+        if ((size_t)opaque_element_table_header +
+            sizeof(opaque_element_table_header_t) >
             end_of_opaque_data) {
             break;
         }
-        if (secured_message_element_table->id !=
-            SPDM_REGISTRY_ID_DMTF) {
+        if (opaque_element_table_header->id > SPDM_REGISTRY_ID_MAX) {
             break;
         }
-        if (secured_message_element_table->vendor_len != 0) {
-            break;
-        }
+
+        opaque_element_data_len = *(uint16_t *)((size_t)(opaque_element_table_header + 1) +
+                                                opaque_element_table_header->vendor_len);
+
         end_of_element_table =
-            (size_t)secured_message_element_table +
-            sizeof(secured_message_opaque_element_table_header_t) +
-            secured_message_element_table->opaque_element_data_len;
+            (size_t)opaque_element_table_header +
+            sizeof(opaque_element_table_header_t) +
+            opaque_element_table_header->vendor_len +
+            sizeof(uint16_t) +
+            opaque_element_data_len;
         if (end_of_element_table > end_of_opaque_data) {
             break;
         }
-        printf("\n      SecuredMessageOpaqueElement_%d(id=0x%02x, len=0x%04x) ",
-               (uint32_t)index, secured_message_element_table->id,
-               secured_message_element_table->opaque_element_data_len);
-
-        if (secured_message_element_table->opaque_element_data_len <
-            sizeof(secured_message_opaque_element_header_t)) {
-            break;
-        }
-        secured_message_element =
-            (void *)(secured_message_element_table + 1);
-        printf("Element(Ver=0x%02x, id=0x%02x) ",
-               secured_message_element->sm_data_version,
-               secured_message_element->sm_data_id);
 
         dump_dispatch_message(
-            m_spdm_opaque_dispatch,
-            LIBSPDM_ARRAY_SIZE(m_spdm_opaque_dispatch),
-            secured_message_element->sm_data_id,
-            (uint8_t *)secured_message_element,
-            secured_message_element_table->opaque_element_data_len);
+            m_spdm_dmtf_opaque_data_dispatch,
+            LIBSPDM_ARRAY_SIZE(m_spdm_dmtf_opaque_data_dispatch),
+            opaque_element_table_header->id,
+            (uint8_t *)opaque_element_table_header,
+            sizeof(opaque_element_table_header_t) +
+            opaque_element_table_header->vendor_len +
+            sizeof(uint16_t) +
+            opaque_element_data_len
+            );
 
-        secured_message_element_table = (void *)end_of_element_table;
+        opaque_element_table_header = (void *)end_of_element_table;
     }
 }
 

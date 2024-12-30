@@ -62,6 +62,9 @@ dispatch_table_entry_t m_spdm_vendor_dispatch[] = {
     { SPDM_REGISTRY_ID_MIPI, "MIPI", NULL },
     { SPDM_REGISTRY_ID_CXL, "CXL", NULL },
     { SPDM_REGISTRY_ID_JEDEC, "JEDEC", NULL },
+    { SPDM_REGISTRY_ID_VESA, "VESA", NULL },
+    { SPDM_REGISTRY_ID_IANA_CBOR, "IANA_CBOR", NULL },
+    { SPDM_REGISTRY_ID_DMTF_DSP, "DMTF_DSP", dump_spdm_vendor_dmtf_dsp },
 };
 
 value_string_entry_t m_spdm_requester_capabilities_string_table[] = {

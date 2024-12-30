@@ -98,6 +98,10 @@ void dump_secured_spdm_message(const void *buffer, size_t buffer_size);
 void dump_spdm_opaque_data(uint8_t spdm_version, const uint8_t *opaque_data,
                            uint16_t opaque_length);
 
+void dump_spdm_dmtf_opaque_data(const void *buffer, size_t buffer_size);
+
+void dump_spdm_dmtf_dsp_opaque_data(const void *buffer, size_t buffer_size);
+
 void dump_pldm_message(const void *buffer, size_t buffer_size);
 
 void dump_pci_doe_discovery_message(const void *buffer, size_t buffer_size);
@@ -119,6 +123,14 @@ void deinit_tdisp_dump(void);
 bool init_tsp_dump(void);
 
 void deinit_tsp_dump(void);
+
+void dump_spdm_vendor_dmtf_dsp(const void *buffer, size_t buffer_size);
+
+void dump_spdm_auth_record_no_tag(const void *buffer, size_t buffer_size);
+
+void dump_spdm_auth_record_with_tag(const void *buffer, size_t buffer_size);
+
+void dump_spdm_auth_message(const void *buffer, size_t buffer_size);
 
 void spdm_dump_set_session_info_use_psk (void *spdm_session_info, bool use_psk);
 
